@@ -2,7 +2,9 @@ queries = {
     "forecast": "forecast",
     "location": "geolookup"
 }
-
+forecast_body = {'simplified': ("forecast", "simpleforecast", 'forecastday'),
+                 'full' : ("forecast","txt_forecast",'forecastday')
+                 }
 wind_directions = {
     '': 'North',
     'ENE': 'East-northeast',
