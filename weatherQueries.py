@@ -2,7 +2,7 @@ import argparse
 import urllib.request
 import json
 from utils import sum_up_method, queries, wind_directions
-from utils import forecast_body as body
+from utils import forecast_body as body, pretty_symbols as symbols
 
 application_key = "dd2ea79e4555250f"  # my temporary key for api on wunderground.com
 
@@ -18,7 +18,7 @@ def get_args_parser():
 
 class QueryResponse:
     def __init__(self, country="Ru", city="Yekaterinburg",
-                 simplified=False, days=1):
+                 simplified=True, days=1):
         self.clarification = None
         self.country = country
         self.city = city
@@ -35,11 +35,12 @@ class QueryResponse:
 
         with urllib.request.urlopen(res_string) as response:
             data = json.loads(response.read().decode())
-            weather_info = self._body_wrap(*body["simplified"], data=data) \
-                if self.simplified else self._body_wrap(*body["full"], data=data)
-
-            for w in weather_info:
-                print(w)
+            if self.simplified:
+                info = SimplifiedForecast.wrap(self._body_wrap(*body["simplified"],
+                                                               data=data))
+            else:
+                info = FullForecast.wrap(self._body_wrap(*body["full"], data=data))
+            
 
     @classmethod
     def _body_wrap(cls, *args, data):
@@ -62,7 +63,40 @@ class SimplifiedForecast:
 
     def _wind_info_representation(self):
         return "Wind direction is " + wind_directions[self.wind_info['dir']] + \
-               "speed is" + self.wind_info["kph"] + "kilometers per hour"
+               " and speed is " + str(self.wind_info["kph"]) + " kilometers per hour\n"
+
+    @staticmethod
+    def wrap(weather_records):
+        all_records = []
+        for record in weather_records:
+            all_records.append(SimplifiedForecast(record))
+        return all_records
+
+    def __str__(self):
+        return "Date is " + self.date['pretty'] + ", " + self.date["weekday"] + \
+               "\n" + "temp is between " + \
+               self.temp[0] + " and " + self.temp[1] + "degrees\n" + \
+               self._wind_info_representation() + " " + "humidity is about " + \
+               str(self.humidity) + "\n" + "Generally: " + self.resume
+
+    def prepare_representation(self):
+        pass
+
+
+class FullForecast:
+    def __init__(self, weather_record):
+        self.date = weather_record["title"]
+        self.text_metric = weather_record['fcttext_metric']
+
+    def __str__(self):
+        return self.date + "\n" + self.text_metric
+
+    @staticmethod
+    def wrap(weather_records):
+        all_records = []
+        for record in weather_records:
+            all_records.append(FullForecast(record))
+        return all_records
 
     def prepare_representation(self):
         pass
