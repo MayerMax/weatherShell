@@ -1,5 +1,5 @@
 import unicodedata
-
+from collections import namedtuple
 queries = {
     "forecast": "forecast",
     "location": "geolookup"
@@ -45,6 +45,4 @@ pretty_symbols = {
 def sum_up_method(*args):
     return "".join(args)
 
-
-c = unicodedata.lookup("Cloud")
-print(c)
+CityInfo = namedtuple("CityInfo", ["name", "c_c"])

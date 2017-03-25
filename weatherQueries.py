@@ -3,6 +3,7 @@ import urllib.request
 import json
 from utils import sum_up_method, queries, wind_directions
 from utils import forecast_body as body, pretty_symbols as symbols
+from utils import CityInfo
 
 application_key = "dd2ea79e4555250f"  # my temporary key for api on wunderground.com
 
@@ -40,7 +41,6 @@ class QueryResponse:
                                                                data=data))
             else:
                 info = FullForecast.wrap(self._body_wrap(*body["full"], data=data))
-            
 
     @classmethod
     def _body_wrap(cls, *args, data):
@@ -114,16 +114,29 @@ class QueryAutocomplete:
             data = response.read().decode()
             city_info = json.loads(data)["RESULTS"]
             for city in city_info:
-                if city['name'] == self.given_name:
+                if self.given_name in city['name'][0:city['name'].index(',')]:
                     return city
 
             return city_info
 
 
+def weather_query(city):
+    query = QueryAutocomplete(city)
+    query_info = query.clarify_query()
+    if isinstance(query_info, list) and len(query_info) > 0:
+        possible_values = []
+        for q in query_info:
+            possible_values.append(CityInfo(q['name'], q['c']))
+        print("Sorry, your query is not precise, here are the variants, "
+              "by autocomplete:")
+
+        for v in possible_values:
+            print(v.name, v.c_c)
+    elif isinstance(query_info, dict):
+        req = CityInfo(query_info['name'][0:query_info['name'].index(',')], query_info['c'])
+
 if __name__ == '__main__':
     parser = get_args_parser()
-    q = QueryResponse()
-    q._raw_weather_response()
-    # q = QueryAutocomplete("yekater")
-    # a = q.clarify_query()
-    # print(a)
+    # q = QueryResponse()
+    # q._raw_weather_response()
+    weather_query("Yekaterinburg")
